@@ -56,6 +56,12 @@ export class TaskController {
     /**
      * Fetch all tasks (optionally filter by status)
      */
+    /**
+     * Fetch all tasks (optionally filter by status)
+     */
+    /**
+     * Fetch all tasks (optionally filter by status)
+     */
     public fetchAllTasks = (req: Request, res: Response): void => {
         try {
             const { status } = req.query;
