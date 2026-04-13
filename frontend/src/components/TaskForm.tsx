@@ -14,10 +14,9 @@ export const TaskForm: React.FC<Props> = ({ onTaskAdded }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
-    
+
     await apiClient.createTask(title, description, priority);
-    
-    // Clear forms and notify parent
+
     setTitle('');
     setDescription('');
     setPriority(TaskPriority.MEDIUM);
@@ -26,39 +25,78 @@ export const TaskForm: React.FC<Props> = ({ onTaskAdded }) => {
 
   return (
     <>
-      <h3 className="text-xl font-semibold mb-6">Create New Task</h3>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <input 
-            type="text" 
-            placeholder="Task Title" 
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)} 
-            required 
-            className="w-full bg-slate-900/60 border border-white/10 rounded-lg text-slate-100 p-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-          />
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold"
+          style={{ background: 'var(--badge-bg)', color: 'var(--badge-text)' }}
+        >
+          +
         </div>
+        <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Create New Task
+        </h3>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {/* Title */}
         <div>
-          <textarea 
-            placeholder="Description..." 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
-            className="w-full min-h-[100px] bg-slate-900/60 border border-white/10 rounded-lg text-slate-100 p-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-y"
-          />
-        </div>
-        <div>
-          <select 
-            value={priority} 
-            onChange={(e) => setPriority(e.target.value as TaskPriority)}
-            className="w-full bg-slate-900/60 border border-white/10 rounded-lg text-slate-100 p-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+          <label
+            className="block text-[11px] font-semibold mb-1.5 uppercase tracking-widest"
+            style={{ color: 'var(--text-muted)' }}
           >
-            <option value={TaskPriority.LOW}>Low Priority</option>
-            <option value={TaskPriority.MEDIUM}>Medium Priority</option>
-            <option value={TaskPriority.HIGH}>High Priority</option>
+            Title
+          </label>
+          <input
+            type="text"
+            placeholder="What needs to be done?"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label
+            className="block text-[11px] font-semibold mb-1.5 uppercase tracking-widest"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            Description
+          </label>
+          <textarea
+            placeholder="Add some details..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="min-h-[100px] resize-y"
+          />
+        </div>
+
+        {/* Priority */}
+        <div>
+          <label
+            className="block text-[11px] font-semibold mb-1.5 uppercase tracking-widest"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            Priority
+          </label>
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as TaskPriority)}
+          >
+            <option value={TaskPriority.LOW}>🟢 Low Priority</option>
+            <option value={TaskPriority.MEDIUM}>🟡 Medium Priority</option>
+            <option value={TaskPriority.HIGH}>🔴 High Priority</option>
           </select>
         </div>
-        <button type="submit" className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]">
-          Add Task
+
+        {/* Submit */}
+        <button
+          type="submit"
+          style={{ background: 'var(--btn-bg)', color: 'var(--btn-text)' }}
+          className="mt-1 w-full font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 hover:brightness-110 active:scale-[0.98] shadow-lg cursor-pointer"
+        >
+          + Add New Task
         </button>
       </form>
     </>
