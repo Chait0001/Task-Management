@@ -1,6 +1,6 @@
-# 📋 Task Management System
+# 📋 TASKX — Task Management System
 
-A full-stack **Task Management** application built with a strictly encapsulated **Object-Oriented Programming (OOP)** architecture. Designed as part of a Software Design & Software Engineering (SDSE) project to demonstrate core OOP principles in a real-world web application.
+A full-stack **Task Management** application built with a strictly encapsulated **Object-Oriented Programming (OOP)** architecture. Create, prioritize, filter, and track tasks through a modern glassmorphism interface with light/dark theme support — powered by React, TypeScript, and Express.js. Designed as part of a **Software Design & Software Engineering (SDSE)** project to demonstrate core OOP principles in a real-world web application.
 
 ---
 
@@ -12,7 +12,9 @@ A full-stack **Task Management** application built with a strictly encapsulated 
 - **Mark Complete** — Mark tasks as completed with a single click
 - **Delete Tasks** — Remove tasks that are no longer needed
 - **Overdue Detection** — Automatic status update for tasks past their deadline
-- **Responsive UI** — Glassmorphism design with animated background, fully responsive layout
+- **Dark / Light Theme** — Toggle between themes with animated sun/moon icons; preference persisted in localStorage
+- **Animated Background** — Canvas-based dotted glow background with organic shimmering that adapts to the active theme
+- **Responsive UI** — Glassmorphism design with a fully responsive layout that works seamlessly across devices
 
 ---
 
@@ -20,11 +22,11 @@ A full-stack **Task Management** application built with a strictly encapsulated 
 
 | Principle | Implementation |
 |---|---|
-| **Encapsulation** | All model fields are `private` with controlled access via getters and dedicated methods |
+| **Encapsulation** | All model fields are `private` with controlled access via getters and dedicated methods (`Task`, `User`, `Project`) |
 | **Aggregation** | `Project` class contains a collection of `Task` objects (HAS-A relationship) |
-| **Singleton Pattern** | `TaskManager` service uses a single shared instance across the application |
-| **Separation of Concerns** | Controller handles HTTP, Service handles business logic, Models hold data |
-| **DTO Mapping** | Internal `Task` objects are mapped to plain DTOs before API responses |
+| **Singleton Pattern** | `TaskManager` service uses a single shared instance across the application via `getInstance()` |
+| **Separation of Concerns** | Controller handles HTTP layer, Service handles business logic, Models hold data and behavior |
+| **DTO Mapping** | Internal `Task` objects are mapped to plain DTOs before API responses to avoid leaking internal state |
 
 ---
 
@@ -35,6 +37,7 @@ A full-stack **Task Management** application built with a strictly encapsulated 
 - **Framework:** Express.js v5
 - **Language:** TypeScript
 - **Architecture:** MVC + Service Layer
+- **Dev Tools:** Nodemon + ts-node
 
 ### Frontend
 - **Framework:** React 18
