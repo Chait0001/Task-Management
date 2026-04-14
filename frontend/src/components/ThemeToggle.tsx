@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface Props {
   isDark: boolean;
@@ -7,19 +8,16 @@ interface Props {
 
 export const ThemeToggle: React.FC<Props> = ({ isDark, onToggle }) => {
   return (
-    <button
+    <motion.button
       onClick={onToggle}
+      whileHover={{ scale: 1.1, boxShadow: 'var(--shadow-glass-lg), 0 0 0 4px rgba(139, 92, 246, 0.12)' }}
+      whileTap={{ scale: 0.92 }}
       aria-label="Toggle theme"
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      style={{
-        background: 'var(--toggle-bg)',
-        border: '1.5px solid var(--border-color)',
-        color: 'var(--text-primary)',
-      }}
-      className="relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+      className="glass-icon-btn w-10 h-10"
     >
       <div className="relative w-[18px] h-[18px]">
-        {/* Sun icon */}
+        {/* Sun icon – shown in dark mode */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="18"
@@ -35,7 +33,8 @@ export const ThemeToggle: React.FC<Props> = ({ isDark, onToggle }) => {
             inset: 0,
             opacity: isDark ? 1 : 0,
             transform: isDark ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.5)',
-            transition: 'all 0.3s ease',
+            transition: 'all 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+            color: 'var(--accent-purple)',
           }}
         >
           <circle cx="12" cy="12" r="5" />
@@ -48,7 +47,8 @@ export const ThemeToggle: React.FC<Props> = ({ isDark, onToggle }) => {
           <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
         </svg>
-        {/* Moon icon */}
+
+        {/* Moon icon – shown in light mode */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="18"
@@ -64,12 +64,13 @@ export const ThemeToggle: React.FC<Props> = ({ isDark, onToggle }) => {
             inset: 0,
             opacity: isDark ? 0 : 1,
             transform: isDark ? 'rotate(90deg) scale(0.5)' : 'rotate(0deg) scale(1)',
-            transition: 'all 0.3s ease',
+            transition: 'all 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+            color: 'var(--accent-purple)',
           }}
         >
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       </div>
-    </button>
+    </motion.button>
   );
 };

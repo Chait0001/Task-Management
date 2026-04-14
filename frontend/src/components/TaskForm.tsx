@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { TaskPriority } from '../models/types';
 import { apiClient } from '../api/apiClient';
+import { GlassButton } from './glass/GlassButton';
 
 interface Props {
   onTaskAdded: () => void;
@@ -26,14 +28,28 @@ export const TaskForm: React.FC<Props> = ({ onTaskAdded }) => {
   return (
     <>
       {/* Section Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold"
-          style={{ background: 'var(--badge-bg)', color: 'var(--badge-text)' }}
+      <div className="flex items-center gap-3 mb-7">
+        <motion.div
+          whileHover={{ scale: 1.08, rotate: 90 }}
+          whileTap={{ scale: 0.92 }}
+          className="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold cursor-default"
+          style={{
+            background: 'var(--badge-bg)',
+            color: 'var(--accent-purple)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid var(--glass-border-subtle)',
+            boxShadow: 'var(--shadow-glass)',
+          }}
         >
-          +
-        </div>
-        <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </motion.div>
+        <h3
+          className="text-lg font-bold tracking-tight"
+          style={{ color: 'var(--text-primary)' }}
+        >
           Create New Task
         </h3>
       </div>
@@ -42,7 +58,7 @@ export const TaskForm: React.FC<Props> = ({ onTaskAdded }) => {
         {/* Title */}
         <div>
           <label
-            className="block text-[11px] font-semibold mb-1.5 uppercase tracking-widest"
+            className="block text-[10px] font-bold mb-2 uppercase tracking-[0.15em]"
             style={{ color: 'var(--text-muted)' }}
           >
             Title
@@ -59,7 +75,7 @@ export const TaskForm: React.FC<Props> = ({ onTaskAdded }) => {
         {/* Description */}
         <div>
           <label
-            className="block text-[11px] font-semibold mb-1.5 uppercase tracking-widest"
+            className="block text-[10px] font-bold mb-2 uppercase tracking-[0.15em]"
             style={{ color: 'var(--text-muted)' }}
           >
             Description
@@ -75,7 +91,7 @@ export const TaskForm: React.FC<Props> = ({ onTaskAdded }) => {
         {/* Priority */}
         <div>
           <label
-            className="block text-[11px] font-semibold mb-1.5 uppercase tracking-widest"
+            className="block text-[10px] font-bold mb-2 uppercase tracking-[0.15em]"
             style={{ color: 'var(--text-muted)' }}
           >
             Priority
@@ -91,13 +107,20 @@ export const TaskForm: React.FC<Props> = ({ onTaskAdded }) => {
         </div>
 
         {/* Submit */}
-        <button
+        <GlassButton
           type="submit"
-          style={{ background: 'var(--btn-bg)', color: 'var(--btn-text)' }}
-          className="mt-1 w-full font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 hover:brightness-110 active:scale-[0.98] shadow-lg cursor-pointer"
+          variant="primary"
+          size="lg"
+          fullWidth
+          icon={
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          }
         >
-          + Add New Task
-        </button>
+          Add New Task
+        </GlassButton>
       </form>
     </>
   );
