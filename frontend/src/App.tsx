@@ -13,8 +13,13 @@ import { GlassTabs } from './components/glass/GlassTabs';
 import { GlassSearchBar } from './components/glass/GlassSearchBar';
 import { GlassIconButton } from './components/glass/GlassIconButton';
 import { GlassFeatureCard } from './components/glass/GlassFeatureCard';
+import { AuthPage } from './components/AuthPage';
+import { HeroSection } from './components/HeroSection';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showHero, setShowHero] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
   const [filter, setFilter] = useState<TaskStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -66,6 +71,14 @@ function App() {
     completed: tasks.filter(t => t.status === TaskStatus.COMPLETED).length,
     pending: tasks.filter(t => t.status === TaskStatus.PENDING).length,
   };
+
+  if (!isAuthenticated && showHero) {
+    return <HeroSection onGetStarted={() => setShowHero(false)} />;
+  }
+
+  if (!isAuthenticated) {
+    return <AuthPage onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="min-h-screen relative">
@@ -162,15 +175,46 @@ function App() {
             </GlassIconButton>
 
             {/* Settings button */}
-            <GlassIconButton
-              size="sm"
-              ariaLabel="Settings"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            </GlassIconButton>
+            <div className="relative">
+              <GlassIconButton
+                size="sm"
+                ariaLabel="Settings"
+                onClick={() => setShowSettings(!showSettings)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              </GlassIconButton>
+
+              {showSettings && (
+                <div
+                  className="absolute right-0 mt-3 w-40 rounded-xl py-2 z-50 overflow-hidden"
+                  style={{
+                    background: 'var(--glass-bg)',
+                    border: '1px solid var(--glass-border-subtle)',
+                    backdropFilter: 'blur(28px)',
+                    WebkitBackdropFilter: 'blur(28px)',
+                    boxShadow: 'var(--shadow-glass)',
+                  }}
+                >
+                  <button
+                    className="w-full text-left px-4 py-2.5 text-sm font-semibold text-red-400 hover:bg-white/5 transition-colors flex items-center gap-2"
+                    onClick={() => {
+                      setIsAuthenticated(false);
+                      setShowSettings(false);
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Theme Toggle */}
             <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
