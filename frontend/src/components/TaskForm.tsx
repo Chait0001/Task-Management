@@ -1,28 +1,35 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { TaskPriority } from '../models/types';
 import { apiClient } from '../api/apiClient';
 import { GlassButton } from './glass/GlassButton';
 
-interface Props {
-  onTaskAdded: () => void;
-}
-
-export const TaskForm: React.FC<Props> = ({ onTaskAdded }) => {
+export const TaskForm: React.FC = () => {
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const mutation = useMutation({
+    mutationFn: () => apiClient.createTask(title, description, priority),
+    onSuccess: () => {
+      setTitle('');
+      setDescription('');
+      setPriority(TaskPriority.MEDIUM);
+      toast.success('Task created successfully');
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => {
+      toast.error('Failed to create task');
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
-
-    await apiClient.createTask(title, description, priority);
-
-    setTitle('');
-    setDescription('');
-    setPriority(TaskPriority.MEDIUM);
-    onTaskAdded();
+    mutation.mutate();
   };
 
   return (

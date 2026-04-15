@@ -1,23 +1,45 @@
 import React from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { Task } from '../models/types';
 import { apiClient } from '../api/apiClient';
 import { GlassTaskCard } from './glass/GlassTaskCard';
 
 interface Props {
   tasks: Task[];
-  onTaskUpdated: () => void;
 }
 
-export const TaskList: React.FC<Props> = ({ tasks, onTaskUpdated }) => {
-  const handleComplete = async (id: string) => {
-    await apiClient.markTaskComplete(id);
-    onTaskUpdated();
+export const TaskList: React.FC<Props> = ({ tasks }) => {
+  const queryClient = useQueryClient();
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => apiClient.markTaskComplete(id),
+    onSuccess: () => {
+      toast.success('Task marked as complete!');
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => {
+      toast.error('Failed to update task');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiClient.deleteTask(id),
+    onSuccess: () => {
+      toast.success('Task deleted!');
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => {
+      toast.error('Failed to delete task');
+    }
+  });
+
+  const handleComplete = (id: string) => {
+    completeMutation.mutate(id);
   };
 
-  const handleDelete = async (id: string) => {
-    await apiClient.deleteTask(id);
-    onTaskUpdated();
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
   /* Empty state */

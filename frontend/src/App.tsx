@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from './hooks/useDebounce';
+import { motion } from 'framer-motion';
 import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
 import { ThemeToggle } from './components/ThemeToggle';
-import { Task, TaskStatus } from './models/types';
+import { TaskStatus } from './models/types';
 import { apiClient } from './api/apiClient';
 import { AmbientBackground } from './components/glass/AmbientBackground';
 import { GlassCard } from './components/glass/GlassCard';
@@ -13,9 +15,9 @@ import { GlassIconButton } from './components/glass/GlassIconButton';
 import { GlassFeatureCard } from './components/glass/GlassFeatureCard';
 
 function App() {
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<TaskStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
@@ -23,6 +25,11 @@ function App() {
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     return false;
+  });
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks', filter],
+    queryFn: () => apiClient.getAllTasks(filter === 'ALL' ? undefined : filter as TaskStatus)
   });
 
   // Sync dark class on <html>
@@ -36,24 +43,10 @@ function App() {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  const fetchTasks = async () => {
-    try {
-      const statusParam = filter === 'ALL' ? undefined : filter as TaskStatus;
-      const data = await apiClient.getAllTasks(statusParam);
-      setTasks(data);
-    } catch (error) {
-      console.error("Failed to fetch tasks", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchTasks();
-  }, [filter]);
-
-  // Filter tasks by search query
+  // Filter tasks by debounced search query
   const filteredTasks = tasks.filter(t =>
-    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description.toLowerCase().includes(searchQuery.toLowerCase())
+    t.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+    t.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
   );
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -193,7 +186,7 @@ function App() {
           <div className="flex flex-col gap-6">
             {/* Create Task Card */}
             <GlassCard blur={28}>
-              <TaskForm onTaskAdded={fetchTasks} />
+              <TaskForm />
             </GlassCard>
 
             {/* Workspace Input */}
@@ -316,6 +309,9 @@ function App() {
 
             {/* Task list in glass panel */}
             <GlassCard blur={28} className="!p-6">
+              <div aria-live="polite" className="sr-only">
+                {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} visible
+              </div>
               <h2
                 className="text-xl font-bold mb-6 flex items-center gap-3 tracking-tight"
                 style={{ color: 'var(--text-primary)' }}
@@ -328,7 +324,7 @@ function App() {
                 />
                 Today's Focus
               </h2>
-              <TaskList tasks={filteredTasks} onTaskUpdated={fetchTasks} />
+              <TaskList tasks={filteredTasks} />
             </GlassCard>
 
             {/* Bottom row: feature card + stat card */}
