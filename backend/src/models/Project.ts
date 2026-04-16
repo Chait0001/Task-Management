@@ -1,79 +1,23 @@
-import { Task, TaskStatus } from './Task';
+import mongoose, { Schema, Document } from 'mongoose';
 
-/**
- * Project Entity
- * Represents a collection of tasks grouped under a single project.
- * Demonstrates aggregation (Project HAS multiple Tasks).
- */
-export class Project {
-    private id: string;
-    private name: string;
-    private tasks: Task[];
-
-    constructor(id: string, name: string) {
-        this.id = id;
-        this.name = name;
-        this.tasks = [];
-    }
-
-    /**
-     * Add a task to the project
-     */
-    public addTask(task: Task): void {
-        this.tasks.push(task);
-    }
-
-    /**
-     * Remove a task by ID
-     */
-    public removeTaskById(taskId: string): boolean {
-        const initialLength = this.tasks.length;
-        this.tasks = this.tasks.filter(task => task.getId() !== taskId);
-
-        return this.tasks.length < initialLength;
-    }
-
-    /**
-     * Find a task inside the project
-     */
-    public findTaskById(taskId: string): Task | undefined {
-        return this.tasks.find(task => task.getId() === taskId);
-    }
-
-    /**
-     * Get all tasks (returns a copy for safety - encapsulation)
-     */
-    public getTasks(): Task[] {
-        return [...this.tasks];
-    }
-
-    /**
-     * Get total number of tasks in project
-     */
-    public getTaskCount(): number {
-        return this.tasks.length;
-    }
-
-    /**
-     * Get only completed tasks
-     */
-    public getCompletedTasks(): Task[] {
-        return this.tasks.filter(task => task.getStatus() === TaskStatus.COMPLETED);
-    }
-
-    /**
-     * Get only pending tasks
-     */
-    public getPendingTasks(): Task[] {
-        return this.tasks.filter(task => task.getStatus() === TaskStatus.PENDING);
-    }
-
-    // Getters (Encapsulation)
-    public getId(): string {
-        return this.id;
-    }
-
-    public getName(): string {
-        return this.name;
-    }
+export interface IProject extends Document {
+    name: string;
+    tasks: mongoose.Types.ObjectId[];
 }
+
+const ProjectSchema: Schema = new Schema({
+    name: { type: String, required: true, trim: true },
+    tasks: [{ type: Schema.Types.ObjectId, ref: 'Task' }]
+}, {
+    timestamps: true,
+    toJSON: {
+        virtuals: true,
+        transform: (_, ret: any) => {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.__v;
+        }
+    }
+});
+
+export const ProjectModel = mongoose.model<IProject>('Project', ProjectSchema);

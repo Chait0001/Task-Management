@@ -1,7 +1,9 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
 export enum TaskStatus {
     PENDING = 'Pending',
     COMPLETED = 'Completed',
-    OVERDUE = 'Overdue' // Added for extra feature
+    OVERDUE = 'Overdue'
 }
 
 export enum TaskPriority {
@@ -10,88 +12,38 @@ export enum TaskPriority {
     HIGH = 'High'
 }
 
-/**
- * Task Entity
- * Represents a real-world task with properties and behaviors.
- * Demonstrates encapsulation and controlled state changes.
- */
-export class Task {
-    private id: string;
-    private title: string;
-    private description: string;
-    private deadline: Date;
-    private priority: TaskPriority;
-    private status: TaskStatus;
+export interface ITask extends Document {
+    title: string;
+    description: string;
+    deadline: Date;
+    priority: TaskPriority;
+    status: TaskStatus;
+}
 
-    constructor(
-        id: string,
-        title: string,
-        description: string,
-        deadline: Date,
-        priority: TaskPriority = TaskPriority.MEDIUM
-    ) {
-        this.id = id;
-        this.title = title.trim();
-        this.description = description.trim();
-        this.deadline = deadline;
-        this.priority = priority;
-        this.status = TaskStatus.PENDING;
+const TaskSchema: Schema = new Schema({
+    title: { type: String, required: true, trim: true },
+    description: { type: String, trim: true, default: '' },
+    deadline: { type: Date, required: true },
+    priority: { 
+        type: String, 
+        enum: Object.values(TaskPriority), 
+        default: TaskPriority.MEDIUM 
+    },
+    status: { 
+        type: String, 
+        enum: Object.values(TaskStatus), 
+        default: TaskStatus.PENDING 
     }
-
-    /**
-     * Mark task as completed
-     */
-    public markAsComplete(): void {
-        this.status = TaskStatus.COMPLETED;
-    }
-
-    /**
-     * Check and update overdue status
-     */
-    public updateStatusBasedOnDeadline(): void {
-        if (this.status !== TaskStatus.COMPLETED && this.deadline < new Date()) {
-            this.status = TaskStatus.OVERDUE;
+}, {
+    timestamps: true,
+    toJSON: {
+        virtuals: true,
+        transform: (_, ret: any) => {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.__v;
         }
     }
+});
 
-    /**
-     * Update task details
-     */
-    public updateDetails(title: string, description: string, deadline: Date): void {
-        this.title = title.trim();
-        this.description = description.trim();
-        this.deadline = deadline;
-    }
-
-    /**
-     * Change priority of task
-     */
-    public changePriority(priority: TaskPriority): void {
-        this.priority = priority;
-    }
-
-    // Getters (Encapsulation)
-    public getId(): string {
-        return this.id;
-    }
-
-    public getTitle(): string {
-        return this.title;
-    }
-
-    public getDescription(): string {
-        return this.description;
-    }
-
-    public getDeadline(): Date {
-        return this.deadline;
-    }
-
-    public getPriority(): TaskPriority {
-        return this.priority;
-    }
-
-    public getStatus(): TaskStatus {
-        return this.status;
-    }
-}
+export const TaskModel = mongoose.model<ITask>('Task', TaskSchema);

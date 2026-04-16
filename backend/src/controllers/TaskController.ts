@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { TaskManager } from '../services/TaskManager';
-import { Task, TaskPriority, TaskStatus } from '../models/Task';
+import { ITask, TaskPriority, TaskStatus } from '../models/Task';
 
 /**
  * TaskController
@@ -18,7 +18,7 @@ export class TaskController {
     /**
      * Create a new task
      */
-    public createTask = (req: Request, res: Response): void => {
+    public createTask = async (req: Request, res: Response): Promise<void> => {
         try {
             const { title, description, deadline, priority } = req.body;
 
@@ -35,7 +35,7 @@ export class TaskController {
                 ? priority
                 : TaskPriority.MEDIUM;
 
-            const task = this.taskManager.createTask(
+            const task = await this.taskManager.createTask(
                 title.trim(),
                 description?.trim() || "",
                 parsedDeadline,
@@ -56,21 +56,15 @@ export class TaskController {
     /**
      * Fetch all tasks (optionally filter by status)
      */
-    /**
-     * Fetch all tasks (optionally filter by status)
-     */
-    /**
-     * Fetch all tasks (optionally filter by status)
-     */
-    public fetchAllTasks = (req: Request, res: Response): void => {
+    public fetchAllTasks = async (req: Request, res: Response): Promise<void> => {
         try {
             const { status } = req.query;
-            let tasks: Task[];
+            let tasks: ITask[];
 
             if (status && Object.values(TaskStatus).includes(status as TaskStatus)) {
-                tasks = this.taskManager.filterTasksByStatus(status as TaskStatus);
+                tasks = await this.taskManager.filterTasksByStatus(status as TaskStatus);
             } else {
-                tasks = this.taskManager.getAllTasks();
+                tasks = await this.taskManager.getAllTasks();
             }
 
             res.status(200).json(tasks.map(task => this.mapTaskToDTO(task)));
@@ -84,11 +78,11 @@ export class TaskController {
     /**
      * Mark a task as complete
      */
-    public completeTaskById = (req: Request, res: Response): void => {
+    public completeTaskById = async (req: Request, res: Response): Promise<void> => {
         try {
             const { id } = req.params;
 
-            const task = this.taskManager.completeTask(id as string);
+            const task = await this.taskManager.completeTask(id as string);
 
             if (!task) {
                 res.status(404).json({ error: 'Task not found' });
@@ -109,11 +103,11 @@ export class TaskController {
     /**
      * Delete a task by ID
      */
-    public removeTask = (req: Request, res: Response): void => {
+    public removeTask = async (req: Request, res: Response): Promise<void> => {
         try {
             const { id } = req.params;
 
-            const isDeleted = this.taskManager.deleteTask(id as string);
+            const isDeleted = await this.taskManager.deleteTask(id as string);
 
             if (!isDeleted) {
                 res.status(404).json({ error: 'Task not found' });
@@ -131,16 +125,16 @@ export class TaskController {
     };
 
     /**
-     * Convert Task object → DTO (safe for API response)
+     * Convert ITask object → DTO (safe for API response)
      */
-    private mapTaskToDTO(task: Task) {
+    private mapTaskToDTO(task: ITask) {
         return {
-            id: task.getId(),
-            title: task.getTitle(),
-            description: task.getDescription(),
-            deadline: task.getDeadline(),
-            priority: task.getPriority(),
-            status: task.getStatus()
+            id: (task as any).id,
+            title: task.title,
+            description: task.description,
+            deadline: task.deadline,
+            priority: task.priority,
+            status: task.status
         };
     }
 }

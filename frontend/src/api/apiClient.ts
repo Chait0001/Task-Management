@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { Task, TaskPriority, TaskStatus } from '../models/types';
 
-const API_URL = 'http://localhost:4000/api/tasks';
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:4000/api/tasks' 
+    : '/_backend/api/tasks';
 
 /**
  * Service to encapsulate external HTTP calls

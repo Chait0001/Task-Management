@@ -1,16 +1,12 @@
-import { Task, TaskPriority, TaskStatus } from '../models/Task';
-import { User } from '../models/User';
-import { Project } from '../models/Project';
+import { TaskModel, ITask, TaskPriority, TaskStatus } from '../models/Task';
+import { UserModel, IUser } from '../models/User';
+import { ProjectModel, IProject } from '../models/Project';
 
 export class TaskManager {
     private static instance: TaskManager;
 
-    private users: Map<string, User> = new Map();
-    private tasks: Map<string, Task> = new Map();
-    private projects: Map<string, Project> = new Map();
-
     private constructor() {
-        this.createProject("1", "Default Workspace");
+        // We'll initialize any defaults in the database connection phase if needed.
     }
 
     public static getInstance(): TaskManager {
@@ -22,77 +18,76 @@ export class TaskManager {
 
     // ---------------- TASK OPERATIONS ----------------
 
-    public createTask(
+    public async createTask(
         title: string,
         description: string,
         deadline: Date,
         priority: TaskPriority
-    ): Task {
-        const id = Date.now().toString();
+    ): Promise<ITask> {
+        const newTask = new TaskModel({
+            title,
+            description,
+            deadline,
+            priority,
+            status: TaskStatus.PENDING
+        });
 
-        const newTask = new Task(id, title, description, deadline, priority);
+        await newTask.save();
 
-        this.tasks.set(id, newTask);
-
-        const defaultProject = this.projects.get("1");
-        if (defaultProject) {
-            defaultProject.addTask(newTask);
+        // In this simple MVP, we assume a default project always exists or we create it on the fly.
+        let defaultProject = await ProjectModel.findOne({ name: 'Default Workspace' });
+        if (!defaultProject) {
+            defaultProject = new ProjectModel({ name: 'Default Workspace' });
         }
+        
+        defaultProject.tasks.push(newTask._id as any);
+        await defaultProject.save();
 
         return newTask;
     }
 
-    public getTaskById(taskId: string): Task | undefined {
-        return this.tasks.get(taskId);
+    public async getTaskById(taskId: string): Promise<ITask | null> {
+        return await TaskModel.findById(taskId);
     }
 
-    public getAllTasks(): Task[] {
-        return Array.from(this.tasks.values());
+    public async getAllTasks(): Promise<ITask[]> {
+        return await TaskModel.find().sort({ createdAt: -1 });
     }
 
-    public filterTasksByStatus(status: TaskStatus): Task[] {
-        return this.getAllTasks().filter(task => task.getStatus() === status);
+    public async filterTasksByStatus(status: TaskStatus): Promise<ITask[]> {
+        return await TaskModel.find({ status }).sort({ createdAt: -1 });
     }
 
-    public completeTask(taskId: string): Task | undefined {
-        const task = this.tasks.get(taskId);
-
-        if (!task) return undefined;
-
-        task.markAsComplete();
-        return task;
+    public async completeTask(taskId: string): Promise<ITask | null> {
+        return await TaskModel.findByIdAndUpdate(
+            taskId,
+            { status: TaskStatus.COMPLETED },
+            { new: true }
+        );
     }
 
-    public deleteTask(taskId: string): boolean {
-        if (!this.tasks.has(taskId)) return false;
+    public async deleteTask(taskId: string): Promise<boolean> {
+        const result = await TaskModel.findByIdAndDelete(taskId);
+        if (!result) return false;
 
-        this.tasks.delete(taskId);
-
-        const defaultProject = this.projects.get("1");
-        if (defaultProject) {
-            defaultProject.removeTaskById(taskId);
-        }
+        // Cleanup project references
+        await ProjectModel.updateMany(
+            { tasks: taskId },
+            { $pull: { tasks: taskId } }
+        );
 
         return true;
     }
 
-    // ---------------- EXTRA FEATURE ----------------
-
-    public updateOverdueTasks(): void {
-        this.tasks.forEach(task => {
-            task.updateStatusBasedOnDeadline();
-        });
-    }
-
     // ---------------- PROJECT OPERATIONS ----------------
 
-    public createProject(projectId: string, name: string): Project {
-        const project = new Project(projectId, name);
-        this.projects.set(projectId, project);
+    public async createProject(name: string): Promise<IProject> {
+        const project = new ProjectModel({ name });
+        await project.save();
         return project;
     }
 
-    public getProjectById(projectId: string): Project | undefined {
-        return this.projects.get(projectId);
+    public async getProjectById(projectId: string): Promise<IProject | null> {
+        return await ProjectModel.findById(projectId);
     }
 }
