@@ -164,7 +164,7 @@ curl -X POST http://localhost:4000/api/tasks \
 
 ### Use Case & ER Diagram
 
-![Use Case & ER Diagram](./docs/sdse_er_diagram.jpg)
+![Use Case & ER Diagram](./docs/sdse_uc_diagram.jpg)
 
 ---
 
