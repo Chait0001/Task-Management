@@ -160,11 +160,11 @@ curl -X POST http://localhost:4000/api/tasks \
 
 ### Class Diagram
 
-![Class Diagram](./docs/class-diagram.jpg)
+![Class Diagram](./docs/sdse_class_diagram.jpg)
 
-### ER Diagram
+### Use Case & ER Diagram
 
-![ER Diagram](./docs/er-diagram.jpg)
+![Use Case & ER Diagram](./docs/sdse_er_diagram.jpg)
 
 ---
 
