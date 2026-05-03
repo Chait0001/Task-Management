@@ -1,5 +1,6 @@
+import React from 'react';
 import { motion } from 'framer-motion';
-import { WebcamPixelGrid } from "@/components/ui/webcam-pixel-grid";
+import DotField from "@/components/ui/DotField";
 
 interface HeroSectionProps {
   onGetStarted: () => void;
@@ -8,25 +9,15 @@ interface HeroSectionProps {
 export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
   return (
     <div className="relative h-screen w-screen bg-black overflow-hidden">
-      {/* Webcam pixel grid background */}
+      {/* DotField background */}
       <div className="absolute inset-0">
-        <WebcamPixelGrid
-          gridCols={60}
-          gridRows={40}
-          maxElevation={50}
-          motionSensitivity={0.25}
-          elevationSmoothing={0.2}
-          colorMode="webcam"
-          backgroundColor="#030303"
-          mirror={true}
-          gapRatio={0.05}
-          invertColors={false}
-          darken={0.6}
-          borderColor="#ffffff"
-          borderOpacity={0.06}
-          className="w-full h-full"
-          onWebcamReady={() => console.log("Webcam ready!")}
-          onWebcamError={(err) => console.error("Webcam error:", err)}
+        <DotField
+          dotRadius={1.5}
+          dotSpacing={14}
+          bulgeStrength={67}
+          glowRadius={160}
+          sparkle={false}
+          waveAmplitude={0}
         />
       </div>
 

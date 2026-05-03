@@ -4,7 +4,6 @@ import { motion, HTMLMotionProps } from 'framer-motion';
 interface GlassCardProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
   children: React.ReactNode;
   blur?: number;
-  glowColor?: string;
   noHover?: boolean;
   className?: string;
 }
@@ -12,7 +11,6 @@ interface GlassCardProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
 export const GlassCard: React.FC<GlassCardProps> = ({
   children,
   blur,
-  glowColor = 'rgba(139, 92, 246, 0.06)',
   noHover = false,
   className = '',
   ...motionProps

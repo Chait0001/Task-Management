@@ -1,5 +1,4 @@
 import { TaskModel, ITask, TaskPriority, TaskStatus } from '../models/Task';
-import { UserModel, IUser } from '../models/User';
 import { ProjectModel, IProject } from '../models/Project';
 
 export class TaskManager {

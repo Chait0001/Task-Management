@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import BorderGlow from './BorderGlow';
 import { GlassCard } from './glass/GlassCard';
-import { WebcamPixelGrid } from '@/components/ui/webcam-pixel-grid';
+import DotField from '@/components/ui/DotField';
 
 interface AuthPageProps {
   onLoginSuccess: () => void;
@@ -57,25 +57,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="min-h-screen bg-black relative flex items-center justify-center p-6">
-      {/* Webcam Pixel Grid Background */}
+      {/* DotField Background */}
       <div className="absolute inset-0">
-        <WebcamPixelGrid
-          gridCols={60}
-          gridRows={40}
-          maxElevation={50}
-          motionSensitivity={0.25}
-          elevationSmoothing={0.2}
-          colorMode="webcam"
-          backgroundColor="#030303"
-          mirror={true}
-          gapRatio={0.05}
-          invertColors={false}
-          darken={0.6}
-          borderColor="#ffffff"
-          borderOpacity={0.06}
-          className="w-full h-full"
-          onWebcamReady={() => console.log("Webcam ready!")}
-          onWebcamError={(err) => console.error("Webcam error:", err)}
+        <DotField
+          dotRadius={1.5}
+          dotSpacing={14}
+          bulgeStrength={67}
+          glowRadius={160}
+          sparkle={false}
+          waveAmplitude={0}
         />
       </div>
 

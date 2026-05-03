@@ -7,7 +7,6 @@ interface GlassIconButtonProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   ariaLabel?: string;
-  glowColor?: string;
 }
 
 const sizeMap = {
@@ -22,7 +21,6 @@ export const GlassIconButton: React.FC<GlassIconButtonProps> = ({
   size = 'md',
   className = '',
   ariaLabel,
-  glowColor = 'rgba(139, 92, 246, 0.1)',
 }) => {
   return (
     <motion.button
