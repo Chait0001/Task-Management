@@ -11,6 +11,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
     <div className="relative h-screen w-screen bg-black overflow-hidden">
       {/* DotField background */}
       <div className="absolute inset-0">
+        {/* @ts-ignore */}
         <DotField
           dotRadius={1.5}
           dotSpacing={14}

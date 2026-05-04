@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export enum TaskStatus {
     PENDING = 'Pending',
+    IN_PROGRESS = 'In Progress',
     COMPLETED = 'Completed',
     OVERDUE = 'Overdue'
 }
@@ -18,6 +19,8 @@ export interface ITask extends Document {
     deadline: Date;
     priority: TaskPriority;
     status: TaskStatus;
+    tags?: mongoose.Types.ObjectId[];
+    blockedBy?: mongoose.Types.ObjectId[];
 }
 
 const TaskSchema: Schema = new Schema({
@@ -33,7 +36,9 @@ const TaskSchema: Schema = new Schema({
         type: String, 
         enum: Object.values(TaskStatus), 
         default: TaskStatus.PENDING 
-    }
+    },
+    tags: [{ type: Schema.Types.ObjectId, ref: 'Tag', default: [] }],
+    blockedBy: [{ type: Schema.Types.ObjectId, ref: 'Task', default: [] }]
 }, {
     timestamps: true,
     toJSON: {

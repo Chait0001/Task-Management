@@ -1,12 +1,21 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Task, TaskStatus } from '../../models/types';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { Task, TaskStatus, TaskPriority } from '../../models/types';
+import { GlassButton } from './GlassButton';
+import { apiClient } from '../../api/apiClient';
 
 interface GlassTaskCardProps {
   task: Task;
-  onComplete: (id: string) => void;
   onDelete: (id: string) => void;
+  onUpdate?: (id: string, updates: Partial<Task>) => void;
+  onStatusChange?: (id: string, status: TaskStatus) => void;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
   index?: number;
+  onFocusStart?: () => void;
+  allTasks?: Task[];
 }
 
 const priorityConfig: Record<string, {
@@ -41,12 +50,74 @@ const priorityConfig: Record<string, {
 
 export const GlassTaskCard: React.FC<GlassTaskCardProps> = ({
   task,
-  onComplete,
   onDelete,
+  onUpdate,
+  onStatusChange,
+  selected = false,
+  onToggleSelect,
   index = 0,
+  onFocusStart,
+  allTasks = []
 }) => {
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editDesc, setEditDesc] = useState(task.description);
+  const [editPriority, setEditPriority] = useState(task.priority);
+  const [selectedDep, setSelectedDep] = useState<string>('');
+
+  const { data: pomodoros = 0 } = useQuery({
+      queryKey: ['pomodoros', task.id],
+      queryFn: () => apiClient.getTaskPomodoros(task.id)
+  });
+
   const done = task.status === TaskStatus.COMPLETED;
   const prio = priorityConfig[task.priority] ?? priorityConfig.Medium;
+  const deadlineDate = new Date(task.deadline);
+  const isOverdue = deadlineDate < new Date() && !done;
+  const daysLeft = Math.ceil((deadlineDate.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+  
+  // Check if any of the blockedBy tasks are not completed
+  // Wait, task.blockedBy just has ObjectIds. If we want to strictly lock, we should check if they are incomplete.
+  // The backend might just send the array of IDs. If length > 0, we can assume it's blocked by *something*.
+  // But truly it's unblocked if all dependencies are COMPLETED.
+  // For simplicity, we can fetch dependencies status or assume it's blocked if `blockedBy` has entries.
+  // Actually, we have `allTasks`. We can check if any `blockedBy` task in `allTasks` is NOT COMPLETED.
+  const isBlocked = task.blockedBy && task.blockedBy.some(blockerId => {
+      const blocker = allTasks.find(t => t.id === blockerId);
+      return blocker && blocker.status !== TaskStatus.COMPLETED;
+  });
+
+  const handleSave = () => {
+      if (onUpdate) {
+          onUpdate(task.id, { title: editTitle, description: editDesc, priority: editPriority });
+      }
+      setIsEditing(false);
+  };
+
+  const handleStatusCycle = () => {
+      if (isBlocked) {
+          toast.error("Task is blocked by dependencies!");
+          return;
+      }
+      if (!onStatusChange) return;
+      if (task.status === TaskStatus.PENDING) onStatusChange(task.id, TaskStatus.IN_PROGRESS);
+      else if (task.status === TaskStatus.IN_PROGRESS) onStatusChange(task.id, TaskStatus.COMPLETED);
+      else if (task.status === TaskStatus.COMPLETED) onStatusChange(task.id, TaskStatus.PENDING);
+      else if (task.status === TaskStatus.OVERDUE) onStatusChange(task.id, TaskStatus.IN_PROGRESS);
+  };
+
+  const handleAddDependency = async () => {
+      if (!selectedDep) return;
+      try {
+          await apiClient.addDependency(task.id, selectedDep);
+          toast.success("Dependency linked.");
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          setSelectedDep('');
+      } catch (e: any) {
+          toast.error(e.response?.data?.error || "Failed to add dependency.");
+      }
+  };
 
   return (
     <motion.div
@@ -59,23 +130,17 @@ export const GlassTaskCard: React.FC<GlassTaskCardProps> = ({
         delay: index * 0.06,
         ease: [0.22, 1, 0.36, 1],
       }}
-      whileHover={{
-        y: -3,
-        scale: 1.008,
-        transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
-      }}
-      className="group relative rounded-2xl p-5 cursor-default"
+      className={`group relative rounded-2xl p-5 ${selected ? 'ring-2 ring-emerald-500' : ''}`}
       style={{
         background: done ? 'var(--complete-bg)' : 'var(--glass-bg)',
         border: `1px solid ${done ? 'rgba(16, 185, 129, 0.2)' : 'var(--glass-border-subtle)'}`,
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
         boxShadow: done ? 'var(--shadow-glass)' : 'var(--shadow-glass-lg)',
-        opacity: done ? 0.65 : 1,
-        transition: 'background 0.3s, border-color 0.3s, box-shadow 0.3s',
+        opacity: done ? 0.65 : (isBlocked ? 0.5 : 1),
+        transition: 'background 0.3s, border-color 0.3s, box-shadow 0.3s, opacity 0.3s',
       }}
     >
-      {/* Top rim light */}
       <div
         className="absolute top-0 left-[8%] right-[8%] h-px rounded-full pointer-events-none"
         style={{
@@ -85,7 +150,6 @@ export const GlassTaskCard: React.FC<GlassTaskCardProps> = ({
         }}
       />
 
-      {/* Left accent bar */}
       <div
         className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full"
         style={{
@@ -97,133 +161,156 @@ export const GlassTaskCard: React.FC<GlassTaskCardProps> = ({
       />
 
       <div className="flex items-start gap-4">
-        {/* Checkbox (glass circle with depth) */}
-        <motion.button
-          onClick={() => !done && onComplete(task.id)}
-          whileHover={!done ? {
-            scale: 1.15,
-            boxShadow: `0 0 0 4px ${prio.glowColor}, var(--shadow-glass)`,
-          } : undefined}
-          whileTap={!done ? { scale: 0.88 } : undefined}
-          className="mt-0.5 w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center cursor-pointer"
-          style={{
-            background: done ? 'var(--checkbox-checked)' : 'var(--glass-bg)',
-            border: `2px solid ${done ? 'var(--checkbox-checked)' : 'var(--checkbox-border)'}`,
-            backdropFilter: 'blur(12px)',
-            boxShadow: done
-              ? 'var(--shadow-glow-purple)'
-              : 'var(--shadow-glass), inset 0 1px 0 rgba(255,255,255,0.2)',
-            transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          }}
-          aria-label={done ? 'Completed' : 'Mark as complete'}
-        >
-          {done && (
-            <motion.svg
-              initial={{ scale: 0, rotate: -45 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-              width="12" height="12" viewBox="0 0 24 24" fill="none"
-              stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </motion.svg>
-          )}
-        </motion.button>
+        {onToggleSelect && (
+            <input 
+                type="checkbox" 
+                checked={selected}
+                onChange={() => onToggleSelect(task.id)}
+                className="mt-1 w-5 h-5 rounded cursor-pointer"
+                disabled={isBlocked}
+            />
+        )}
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3 mb-1.5">
-            <h4
-              className={`text-[15px] font-semibold leading-snug ${done ? 'line-through' : ''}`}
-              style={{ color: done ? 'var(--text-muted)' : 'var(--text-primary)' }}
-            >
-              {task.title}
-            </h4>
+          <AnimatePresence mode="wait">
+            {isEditing ? (
+              <motion.div key="editing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-3">
+                <input 
+                  type="text" 
+                  value={editTitle} 
+                  onChange={e => setEditTitle(e.target.value)} 
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                  style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }}
+                />
+                <textarea 
+                  value={editDesc} 
+                  onChange={e => setEditDesc(e.target.value)} 
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none min-h-[60px]"
+                  style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }}
+                />
+                <select 
+                  value={editPriority} 
+                  onChange={e => setEditPriority(e.target.value as TaskPriority)} 
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                  style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }}
+                >
+                  <option value={TaskPriority.LOW}>Low</option>
+                  <option value={TaskPriority.MEDIUM}>Medium</option>
+                  <option value={TaskPriority.HIGH}>High</option>
+                </select>
+                
+                <div className="flex gap-2 items-center">
+                    <select 
+                        value={selectedDep}
+                        onChange={e => setSelectedDep(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                        style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }}
+                    >
+                        <option value="">-- Link Dependency --</option>
+                        {allTasks.filter(t => t.id !== task.id).map(t => (
+                            <option key={t.id} value={t.id}>{t.title}</option>
+                        ))}
+                    </select>
+                    <GlassButton size="sm" onClick={handleAddDependency}>Link</GlassButton>
+                </div>
 
-            {/* Priority badge (glass pill) */}
-            <span
-              className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex-shrink-0"
-              style={{
-                background: prio.bgColor,
-                color: prio.textColor,
-                backdropFilter: 'blur(8px)',
-                border: `1px solid ${prio.dotColor}18`,
-                boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1)`,
-              }}
-            >
-              {prio.label}
-            </span>
-          </div>
+                <div className="flex gap-2 mt-2">
+                  <GlassButton size="sm" onClick={handleSave} variant="primary">Save</GlassButton>
+                  <GlassButton size="sm" variant="secondary" onClick={() => setIsEditing(false)}>Cancel</GlassButton>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="viewing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <h4
+                    className={`text-[15px] font-semibold leading-snug flex items-center gap-2 ${done ? 'line-through' : ''}`}
+                    style={{ color: done ? 'var(--text-muted)' : 'var(--text-primary)' }}
+                  >
+                    {isBlocked && <span title="Blocked by dependency">🔒</span>}
+                    {task.title}
+                  </h4>
 
-          {task.description && (
-            <p className="text-sm mb-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              {task.description}
-            </p>
-          )}
+                  <span
+                    className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex-shrink-0"
+                    style={{
+                      background: prio.bgColor,
+                      color: prio.textColor,
+                      backdropFilter: 'blur(8px)',
+                      border: `1px solid ${prio.dotColor}18`,
+                      boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1)`,
+                    }}
+                  >
+                    {prio.label}
+                  </span>
+                </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
-              {done ? (
-                <>
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Completed
-                </>
-              ) : (
-                <>
-                  <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: prio.dotColor }} />
-                  Pending
-                </>
-              )}
-            </span>
+                {task.description && (
+                  <p className="text-sm mb-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {task.description}
+                  </p>
+                )}
+                
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {isOverdue && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase" style={{ background: '#ef444422', color: '#ef4444', border: '1px solid #ef444444' }}>
+                          ⚠️ Overdue
+                      </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: 'var(--glass-bg)', color: 'var(--text-muted)', border: '1px solid var(--glass-border-subtle)' }}>
+                      Due in {daysLeft} days
+                  </span>
+                  {pomodoros > 0 && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1" style={{ background: '#f59e0b22', color: '#f59e0b', border: '1px solid #f59e0b44' }}>
+                          🍅 ×{pomodoros}
+                      </span>
+                  )}
+                  {task.tags?.map(t => (
+                      <span key={t._id} className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: `${t.color}22`, color: t.color, border: `1px solid ${t.color}44` }}>
+                          {t.name}
+                      </span>
+                  ))}
+                  {task.blockedBy && task.blockedBy.length > 0 && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: '#64748b22', color: '#64748b', border: '1px solid #64748b44' }}>
+                          🔗 {task.blockedBy.length} Dep{task.blockedBy.length !== 1 ? 's' : ''}
+                      </span>
+                  )}
+                </div>
 
-            {/* Delete button (glass pill with inset press) */}
-            <motion.button
-              onClick={() => onDelete(task.id)}
-              whileHover={{
-                scale: 1.05,
-                boxShadow: '0 2px 12px rgba(239, 68, 68, 0.12)',
-              }}
-              whileTap={{
-                scale: 0.95,
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-              }}
-              className="
-                text-xs font-semibold opacity-0 group-hover:opacity-100
-                transition-all duration-300
-                cursor-pointer px-3 py-1.5 rounded-full
-              "
-              style={{
-                color: 'var(--delete-text)',
-                background: 'rgba(239, 68, 68, 0.06)',
-                border: '1px solid rgba(239, 68, 68, 0.12)',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              Delete
-            </motion.button>
-          </div>
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-2">
+                      <button 
+                          onClick={handleStatusCycle}
+                          disabled={isBlocked && !done}
+                          className={`text-xs font-medium flex items-center gap-1.5 px-2 py-1 rounded-full transition-colors ${isBlocked && !done ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5 cursor-pointer'}`} 
+                          style={{ color: 'var(--text-muted)', border: '1px solid var(--glass-border-subtle)' }}
+                      >
+                          {task.status === TaskStatus.PENDING && <><span className="inline-block w-2 h-2 rounded-full bg-amber-500" /> Pending</>}
+                          {task.status === TaskStatus.IN_PROGRESS && <><span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" /> In Progress</>}
+                          {task.status === TaskStatus.COMPLETED && <><span className="inline-block w-2 h-2 rounded-full bg-emerald-500" /> Completed</>}
+                          {task.status === TaskStatus.OVERDUE && <><span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Overdue</>}
+                      </button>
+
+                      {!done && (
+                          <button
+                              onClick={onFocusStart}
+                              disabled={isBlocked}
+                              className={`text-xs font-bold px-3 py-1 rounded-full transition-all ${isBlocked ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:scale-105'}`}
+                              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)' }}
+                          >
+                              🎯 Focus
+                          </button>
+                      )}
+                  </div>
+
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => setIsEditing(true)} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--text-primary)', background: 'var(--glass-bg)' }}>Edit</button>
+                    <button onClick={() => onDelete(task.id)} className="text-xs px-2 py-1 rounded" style={{ color: '#ef4444', background: '#ef444422' }}>Delete</button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-
-        {/* Arrow action button */}
-        <motion.button
-          whileHover={{
-            scale: 1.12,
-            x: 2,
-            boxShadow: 'var(--shadow-glass-lg), 0 0 0 3px rgba(139, 92, 246, 0.08)',
-          }}
-          whileTap={{
-            scale: 0.9,
-            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.08)',
-          }}
-          onClick={() => !done && onComplete(task.id)}
-          className="glass-icon-btn w-8 h-8 flex-shrink-0 mt-0.5"
-          style={{ opacity: done ? 0.25 : 0.5 }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14" />
-            <path d="m12 5 7 7-7 7" />
-          </svg>
-        </motion.button>
       </div>
     </motion.div>
   );

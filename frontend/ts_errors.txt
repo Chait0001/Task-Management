@@ -1,0 +1,12 @@
+src/api/apiClient.ts(2,42): error TS2305: Module '"../models/types"' has no exported member 'Tag'.
+src/components/AuthPage.tsx(65,11): error TS2322: Type '{ dotRadius: number; dotSpacing: number; glowRadius: number; sparkle: boolean; waveAmplitude: number; }' is not assignable to type 'IntrinsicAttributes & object'.
+  Property 'dotRadius' does not exist on type 'IntrinsicAttributes & object'.
+src/components/FocusModeOverlay.tsx(88,68): error TS2322: Type '{ children: string; size: "lg"; onClick: () => void; style: { background: string; color: string; }; }' is not assignable to type 'IntrinsicAttributes & GlassButtonProps'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & GlassButtonProps'.
+src/components/glass/GlassTaskCard.tsx(54,3): error TS6133: 'onComplete' is declared but its value is never read.
+src/components/HeroSection.tsx(15,11): error TS2322: Type '{ dotRadius: number; dotSpacing: number; bulgeStrength: number; glowRadius: number; sparkle: boolean; waveAmplitude: number; }' is not assignable to type 'IntrinsicAttributes & object'.
+  Property 'dotRadius' does not exist on type 'IntrinsicAttributes & object'.
+src/components/TaskList.tsx(30,103): error TS2345: Argument of type 'Partial<Task>' is not assignable to parameter of type 'Partial<{ title: string; description: string; priority: TaskPriority; deadline: string; }>'.
+  Types of property 'deadline' are incompatible.
+    Type 'string | Date | undefined' is not assignable to type 'string | undefined'.
+      Type 'Date' is not assignable to type 'string'.

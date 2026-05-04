@@ -3,6 +3,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import taskRoutes from './routes/taskRoutes';
+import { TaskModel, TaskStatus } from './models/Task';
 
 // Load environment variables
 dotenv.config();
@@ -78,6 +79,14 @@ mongoose.connect(MONGODB_URI)
         app.listen(PORT, () => {
             console.log(`🚀 Server running at http://localhost:${PORT}`);
         });
+
+        // Auto-mark Overdue tasks
+        setInterval(async () => {
+          await TaskModel.updateMany(
+            { deadline: { $lt: new Date() }, status: { $in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS] } },
+            { $set: { status: TaskStatus.OVERDUE } }
+          );
+        }, 60_000);
     })
     .catch((error: Error) => {
         console.error('❌ Error connecting to MongoDB:', error.message);

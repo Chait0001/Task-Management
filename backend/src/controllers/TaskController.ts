@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { TaskManager } from '../services/TaskManager';
-import { ITask, TaskPriority, TaskStatus } from '../models/Task';
+import { TaskModel, ITask, TaskPriority, TaskStatus } from '../models/Task';
 
 /**
  * TaskController
@@ -124,6 +124,42 @@ export class TaskController {
         }
     };
 
+    public updateTask = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const { id } = req.params;
+            const { title, description, deadline, priority } = req.body;
+            const task = await this.taskManager.updateTask(id as string, { title, description, deadline: deadline ? new Date(deadline) : undefined, priority });
+            if (!task) { res.status(404).json({ error: 'Task not found' }); return; }
+            res.status(200).json({ message: 'Task updated', task: this.mapTaskToDTO(task) });
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public updateTaskStatus = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+            if (!Object.values(TaskStatus).includes(status)) {
+                res.status(400).json({ error: 'Invalid status' }); return;
+            }
+            const task = await TaskModel.findByIdAndUpdate(id as string, { status }, { new: true });
+            if (!task) { res.status(404).json({ error: 'Task not found' }); return; }
+            res.status(200).json({ message: 'Status updated', task: this.mapTaskToDTO(task) });
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public getStats = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const stats = await this.taskManager.getStats();
+            res.status(200).json(stats);
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
     /**
      * Convert ITask object → DTO (safe for API response)
      */
@@ -134,7 +170,8 @@ export class TaskController {
             description: task.description,
             deadline: task.deadline,
             priority: task.priority,
-            status: task.status
+            status: task.status,
+            tags: task.tags || []
         };
     }
 }

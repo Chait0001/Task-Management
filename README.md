@@ -177,3 +177,18 @@ curl -X POST http://localhost:4000/api/tasks \
 - **M. S. Thejas**
 
 ---
+
+## Deployment (Vercel)
+
+### Backend
+1. Go to vercel.com → New Project → Import from GitHub → select this repo
+2. Set Root Directory to: `backend`
+3. Add environment variable: `MONGODB_URI` = your MongoDB Atlas connection string
+4. Add environment variable: `FRONTEND_URL` = your frontend Vercel URL (add after frontend is deployed)
+5. Deploy
+
+### Frontend
+1. Go to vercel.com → New Project → Import from GitHub → select this repo again
+2. Set Root Directory to: `frontend`
+3. Add environment variable: `VITE_API_URL` = https://<your-backend>.vercel.app/api
+4. Deploy

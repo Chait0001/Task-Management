@@ -1,25 +1,41 @@
 // @ts-nocheck
+export interface DotFieldProps {
+  dotRadius?: number;
+  dotSpacing?: number;
+  cursorRadius?: number;
+  cursorForce?: number;
+  bulgeOnly?: boolean;
+  bulgeStrength?: number;
+  glowRadius?: number;
+  sparkle?: boolean;
+  waveAmplitude?: number;
+  gradientFrom?: string;
+  gradientTo?: string;
+  glowColor?: string;
+  [key: string]: any;
+}
 import { useEffect, useRef, memo } from 'react';
 
 import './DotField.css';
 
 const TWO_PI = Math.PI * 2;
 
-const DotField = memo(({
-  dotRadius = 1.5,
-  dotSpacing = 14,
-  cursorRadius = 500,
-  cursorForce = 0.1,
-  bulgeOnly = true,
-  bulgeStrength = 67,
-  glowRadius = 160,
-  sparkle = false,
-  waveAmplitude = 0,
-  gradientFrom = 'rgba(168, 85, 247, 0.35)',
-  gradientTo = 'rgba(180, 151, 207, 0.25)',
-  glowColor = '#120F17',
-  ...rest
-}) => {
+const DotField = memo((props: DotFieldProps) => {
+  const {
+    dotRadius = 1.5,
+    dotSpacing = 14,
+    cursorRadius = 500,
+    cursorForce = 0.1,
+    bulgeOnly = true,
+    bulgeStrength = 67,
+    glowRadius = 160,
+    sparkle = false,
+    waveAmplitude = 0,
+    gradientFrom = 'rgba(168, 85, 247, 0.35)',
+    gradientTo = 'rgba(180, 151, 207, 0.25)',
+    glowColor = '#120F17',
+    ...rest
+  } = props;
   const canvasRef = useRef(null);
   const svgRef = useRef(null);
   const glowRef = useRef(null);

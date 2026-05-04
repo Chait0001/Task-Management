@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Task, TaskPriority, TaskStatus } from '../models/types';
+import { Task, TaskPriority, TaskStatus, Tag } from '../models/types';
 
 /**
  * Base API URL resolution:
@@ -27,15 +27,13 @@ export const apiClient = {
         title: string,
         description: string,
         priority: TaskPriority,
+        deadlineStr: string
     ): Promise<Task> => {
-        const deadline = new Date();
-        deadline.setDate(deadline.getDate() + 7); // default deadline: 7 days from now
-
         const response = await axios.post<{ task: Task }>(TASKS_URL, {
             title,
             description,
             priority,
-            deadline: deadline.toISOString(),
+            deadline: deadlineStr,
         });
         return response.data.task;
     },
@@ -48,4 +46,61 @@ export const apiClient = {
     deleteTask: async (id: string): Promise<void> => {
         await axios.delete(`${TASKS_URL}/${id}`);
     },
+
+    updateTask: async (id: string, data: Partial<{ title: string; description: string; priority: TaskPriority; deadline: string }>): Promise<Task> => {
+        const response = await axios.put<{ task: Task }>(`${TASKS_URL}/${id}`, data);
+        return response.data.task;
+    },
+
+    updateTaskStatus: async (id: string, status: TaskStatus): Promise<Task> => {
+        const response = await axios.patch<{ task: Task }>(`${TASKS_URL}/${id}/status`, { status });
+        return response.data.task;
+    },
+
+    getStats: async (): Promise<{ total: number; completed: number; pending: number; inProgress: number; overdue: number }> => {
+        const response = await axios.get(`${API_BASE}/stats`);
+        return response.data;
+    },
+
+    getProjects: async (): Promise<{ _id: string; name: string }[]> => {
+        const response = await axios.get(`${API_BASE}/projects`);
+        return response.data;
+    },
+
+    getTags: async (): Promise<Tag[]> => {
+        const res = await axios.get(`${API_BASE}/tags`);
+        return res.data;
+    },
+
+    // Focus API
+    startFocusSession: async (taskId: string, durationMinutes: number = 25) => {
+        const res = await axios.post(`${API_BASE}/focus/start`, { taskId, durationMinutes });
+        return res.data;
+    },
+    completeFocusSession: async (sessionId: string) => {
+        const res = await axios.patch(`${API_BASE}/focus/${sessionId}/complete`);
+        return res.data;
+    },
+    abandonFocusSession: async (sessionId: string) => {
+        const res = await axios.patch(`${API_BASE}/focus/${sessionId}/abandon`);
+        return res.data;
+    },
+    getTaskPomodoros: async (taskId: string): Promise<number> => {
+        const res = await axios.get(`${API_BASE}/focus/task/${taskId}/pomodoros`);
+        return res.data.count;
+    },
+    getProductivityScore: async (): Promise<number> => {
+        const res = await axios.get(`${API_BASE}/focus/productivity`);
+        return res.data.score;
+    },
+
+    // Dependency API
+    addDependency: async (taskId: string, blockedById: string): Promise<Task> => {
+        const res = await axios.post(`${API_BASE}/tasks/${taskId}/dependencies`, { blockedById });
+        return res.data;
+    },
+    removeDependency: async (taskId: string, blockedById: string): Promise<Task> => {
+        const res = await axios.delete(`${API_BASE}/tasks/${taskId}/dependencies`, { data: { blockedById } });
+        return res.data;
+    }
 };

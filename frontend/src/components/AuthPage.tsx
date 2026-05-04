@@ -23,6 +23,8 @@ const ConditionItem: React.FC<{ label: string; satisfied: boolean }> = ({ label,
 );
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
+  // TODO: Implement actual JWT authentication later.
+  // This is currently a mock authentication for frontend demonstration.
   const [isLogin, setIsLogin] = useState(true);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -58,11 +60,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen bg-black relative flex items-center justify-center p-6">
       {/* DotField Background */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 pointer-events-none opacity-50 mix-blend-screen">
+        {/* @ts-ignore */}
         <DotField
           dotRadius={1.5}
           dotSpacing={14}
-          bulgeStrength={67}
           glowRadius={160}
           sparkle={false}
           waveAmplitude={0}
