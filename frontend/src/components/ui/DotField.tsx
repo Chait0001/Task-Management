@@ -1,4 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+import { useEffect, useRef, memo } from 'react';
+import './DotField.css';
+
 export interface DotFieldProps {
   dotRadius?: number;
   dotSpacing?: number;
@@ -12,11 +16,9 @@ export interface DotFieldProps {
   gradientFrom?: string;
   gradientTo?: string;
   glowColor?: string;
-  [key: string]: any;
+  className?: string;
+  style?: React.CSSProperties;
 }
-import { useEffect, useRef, memo } from 'react';
-
-import './DotField.css';
 
 const TWO_PI = Math.PI * 2;
 
