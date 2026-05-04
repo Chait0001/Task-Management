@@ -34,5 +34,5 @@ flowchart LR
     UC7 -.->|include| UC8
     UC7 -.->|include| UC9
 
-    UC11 <-- System
+    System --> UC11
 ```
