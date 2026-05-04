@@ -208,7 +208,7 @@ function App() {
               <TaskForm />
             </GlassCard>
 
-            <GlassCard blur={24} className="!p-5">
+            <GlassCard blur={24} className="p-5!">
               <label className="text-sm font-bold block mb-2" style={{ color: 'var(--text-primary)' }}>Select Project</label>
               <select className="w-full px-4 py-2 rounded-lg outline-none" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)' }}>
                   <option value="">-- Choose Project --</option>
@@ -216,7 +216,7 @@ function App() {
               </select>
             </GlassCard>
 
-            <GlassCard blur={24} className="!p-5">
+            <GlassCard blur={24} className="p-5!">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Quick Stats</span>
               </div>
@@ -285,12 +285,11 @@ function App() {
               <span className="text-xs font-medium ml-auto" style={{ color: 'var(--text-muted)' }}>{filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}</span>
             </div>
 
-            <GlassCard blur={28} className="!p-6">
+            <GlassCard blur={28} className="p-6!">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-3 tracking-tight" style={{ color: 'var(--text-primary)' }}>
                 <span className="inline-block w-1 h-6 rounded-full bg-amber-500" />
                 Today's Focus
               </h2>
-              {/* @ts-ignore */}
               <TaskList tasks={filteredTasks} onFocusStart={handleFocusStart} allTasks={tasks} />
             </GlassCard>
             

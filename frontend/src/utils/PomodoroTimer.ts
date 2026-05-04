@@ -1,7 +1,7 @@
 export class PomodoroTimer {
     private durationMs: number;
     private remainingMs: number;
-    private intervalId: NodeJS.Timeout | null = null;
+    private intervalId: ReturnType<typeof setInterval> | null = null;
     private lastTickTime: number = 0;
     
     public onTick?: (remainingMs: number) => void;
